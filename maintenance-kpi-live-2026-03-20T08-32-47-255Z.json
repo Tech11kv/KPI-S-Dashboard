@@ -30,12 +30,12 @@
       },
       {
         "date": "17/3/2026",
-        "open": 900,
+        "open": 500,
         "actionRequired": 10,
         "accept": 6,
         "rejected": 0,
-        "completed": 34,
-        "closure": 85,
+        "completed": 800,
+        "closure": 2000,
         "mttr": 0.7
       }
     ]
