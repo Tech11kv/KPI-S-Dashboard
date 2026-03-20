@@ -2,8 +2,8 @@
   "kpi": {
     "mttr": 0.8,
     "mtbf": 627,
-    "notifClosure": 70,
-    "workClosure": 70
+    "notifClosure": 90,
+    "workClosure": 80
   },
   "notificationDaily": {
     "title": "Notification Type M3 Date:18/03/2026",
@@ -20,7 +20,7 @@
       },
       {
         "date": "16/3/2026",
-        "open": 800,
+        "open": 100,
         "actionRequired": 10,
         "accept": 7,
         "rejected": 56,
