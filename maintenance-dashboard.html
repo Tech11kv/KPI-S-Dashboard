@@ -1,0 +1,1699 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maintenance KPI Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+:root {
+    --bg-1: #020617;
+    --bg-2: #000000;
+    --panel: rgba(255, 255, 255, 0.08);
+    --text: #ffffff;
+    --muted: #94a3b8;
+    --ok: #22c55e;
+    --warn: #facc15;
+    --bad: #ef4444;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background:
+        linear-gradient(rgba(2, 6, 23, 0.78), rgba(2, 6, 23, 0.9)),
+        url("./dashboard-bg.avif") center center / cover no-repeat fixed;
+    color: var(--text);
+    overflow-x: hidden;
+}
+
+#loginScreen {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background:
+        linear-gradient(rgba(4, 7, 24, 0.45), rgba(4, 7, 24, 0.55)),
+        url("./plc-background.avif") center center / cover no-repeat;
+    z-index: 9999;
+    padding: 16px;
+}
+
+#loginScreen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: none;
+    pointer-events: none;
+}
+
+.login-box {
+    width: min(100%, 360px);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 24px;
+    border-radius: 15px;
+    text-align: center;
+    border: 2px solid rgba(34, 211, 238, 0.85);
+    box-shadow:
+        0 0 28px rgba(0, 255, 255, 0.5),
+        0 0 96px rgba(45, 212, 191, 0.48),
+        inset 0 0 26px rgba(34, 211, 238, 0.25);
+    position: relative;
+    overflow: hidden;
+    animation: loginGlow 10s ease-in-out infinite;
+    backdrop-filter: blur(3px);
+}
+
+.welcome-banner {
+    position: absolute;
+    top: 48px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    font-size: clamp(26px, 4.2vw, 46px);
+    font-weight: 900;
+    letter-spacing: 0.4px;
+    text-align: center;
+    white-space: nowrap;
+    padding: 4px 16px;
+    color: #f8fafc;
+    text-shadow: 0 0 8px rgba(34, 211, 238, 0.28);
+    animation: welcomeGlow 4.5s ease-in-out infinite;
+}
+
+@keyframes welcomeGlow {
+    0%, 100% { filter: saturate(0.92) brightness(0.95); }
+    50% { filter: saturate(1.25) brightness(1.2); }
+}
+
+.login-box::before {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    background: conic-gradient(from 0deg, #22d3ee, #a3e635, #facc15, #f97316, #e11d48, #22d3ee);
+    animation: spinGlow 10s linear infinite;
+    opacity: 0.28;
+}
+
+.login-box::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: 13px;
+    background: rgba(5, 10, 20, 0.9);
+    z-index: 0;
+}
+
+.login-box > * {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes spinGlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes loginGlow {
+    0% {
+        border-color: rgba(34, 211, 238, 0.9);
+        box-shadow: 0 0 28px rgba(34, 211, 238, 0.52), 0 0 96px rgba(34, 211, 238, 0.38), inset 0 0 22px rgba(34, 211, 238, 0.2);
+    }
+    33% {
+        border-color: rgba(56, 189, 248, 0.9);
+        box-shadow: 0 0 35px rgba(56, 189, 248, 0.55), 0 0 110px rgba(56, 189, 248, 0.4), inset 0 0 28px rgba(56, 189, 248, 0.26);
+    }
+    66% {
+        border-color: rgba(14, 165, 233, 0.9);
+        box-shadow: 0 0 30px rgba(14, 165, 233, 0.56), 0 0 106px rgba(45, 212, 191, 0.42), inset 0 0 24px rgba(14, 165, 233, 0.24);
+    }
+    100% {
+        border-color: rgba(34, 211, 238, 0.9);
+        box-shadow: 0 0 28px rgba(34, 211, 238, 0.52), 0 0 96px rgba(34, 211, 238, 0.38), inset 0 0 22px rgba(34, 211, 238, 0.2);
+    }
+}
+
+.login-box h2 {
+    margin-top: 0;
+}
+
+.corner-logo {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 42px;
+    height: 42px;
+    object-fit: contain;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+}
+
+.login-visual {
+    width: 88px;
+    height: 88px;
+    margin: 0 auto 10px;
+    border-radius: 50%;
+    position: relative;
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 30% 25%, #67e8f9, #0f172a 70%);
+    box-shadow: 0 0 26px rgba(34, 211, 238, 0.55);
+    animation: avatarPulse 2.8s ease-in-out infinite;
+}
+
+.login-visual .person {
+    font-size: 38px;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.45));
+}
+
+.login-visual .status-dot {
+    position: absolute;
+    right: 6px;
+    bottom: 8px;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: #22c55e;
+    border: 2px solid #021b2a;
+    animation: dotPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes avatarPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+@keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6); }
+    60% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+}
+
+.login-box input {
+    display: block;
+    width: 100%;
+    margin: 10px auto;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+}
+
+.login-box button {
+    width: 100%;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: var(--ok);
+    color: #000;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+#error {
+    color: #ff7b7b;
+    margin-top: 8px;
+    min-height: 20px;
+}
+
+#uploadScreen {
+    position: fixed;
+    inset: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: #000;
+    z-index: 9998;
+    padding: 16px;
+}
+
+.ready-screen {
+    position: fixed;
+    inset: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 9997;
+    padding: 16px;
+}
+
+.ready-box {
+    width: min(100%, 420px);
+    text-align: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 16px;
+    padding: 26px;
+    box-shadow: 0 0 40px rgba(34, 211, 238, 0.3);
+}
+
+.ready-box h3 {
+    margin: 0 0 8px;
+    font-size: 28px;
+}
+
+.ready-box p {
+    margin: 0 0 16px;
+    color: #cbd5e1;
+}
+
+.ready-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-weight: 800;
+    font-size: 16px;
+    cursor: pointer;
+    background: linear-gradient(135deg, #22d3ee, #38bdf8);
+    color: #03263f;
+}
+
+.upload-box {
+    width: min(100%, 440px);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 24px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+}
+
+.upload-box h3 {
+    margin-top: 0;
+}
+
+.upload-box input[type="file"] {
+    width: 100%;
+    margin: 12px 0;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+}
+
+.upload-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.upload-actions button {
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.upload-actions .load-btn {
+    background: #38bdf8;
+    color: #03111f;
+}
+
+.upload-actions .skip-btn {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.hint {
+    color: var(--muted);
+    font-size: 13px;
+    margin-top: 10px;
+}
+
+.upload-error {
+    color: #ff7b7b;
+    min-height: 18px;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+#dashboard {
+    display: none;
+    padding-top: 2px;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background:
+        linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
+    animation: gridMove 28s linear infinite;
+    opacity: 0.42;
+    z-index: -1;
+}
+
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(to top, rgba(10, 18, 30, 0.95) 0%, rgba(10, 18, 30, 0.76) 28%, rgba(10, 18, 30, 0.12) 64%, transparent 100%),
+        radial-gradient(circle at 76% 92%, rgba(251, 146, 60, 0.45), transparent 30%),
+        radial-gradient(circle at 60% 88%, rgba(34, 211, 238, 0.2), transparent 28%),
+        linear-gradient(to right, rgba(0, 0, 0, 0.75) 0 8%, rgba(255, 255, 255, 0) 8% 10%, rgba(0, 0, 0, 0.68) 10% 18%, rgba(255, 255, 255, 0) 18% 20%, rgba(0, 0, 0, 0.64) 20% 28%, rgba(255, 255, 255, 0) 28% 30%, rgba(0, 0, 0, 0.6) 30% 36%, rgba(255, 255, 255, 0) 36% 100%),
+        repeating-linear-gradient(90deg, rgba(239, 68, 68, 0.24) 0 14px, rgba(249, 115, 22, 0.2) 14px 28px),
+        linear-gradient(to right, rgba(71, 85, 105, 0.58) 0 100%);
+    background-size:
+        100% 100%,
+        100% 100%,
+        100% 100%,
+        60% 24%,
+        34% 8%,
+        100% 6%;
+    background-position:
+        0 0,
+        0 0,
+        0 0,
+        82% 80%,
+        72% 90%,
+        0 94%;
+    background-repeat: no-repeat;
+    z-index: -2;
+    animation: factoryDrift 22s ease-in-out infinite alternate;
+}
+
+@keyframes gridMove {
+    from { background-position: 0 0; }
+    to { background-position: 30px 30px; }
+}
+
+@keyframes factoryDrift {
+    0% { filter: saturate(0.95) brightness(0.95); transform: translateX(0); }
+    100% { filter: saturate(1.1) brightness(1.05); transform: translateX(-8px); }
+}
+
+@keyframes rgbMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 20px 2px;
+}
+
+.right-tools {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dash-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.dash-btn.upload {
+    background: #38bdf8;
+    color: #04111e;
+}
+
+.dash-btn.logout {
+    background: #ef4444;
+    color: #fff;
+}
+
+.dash-btn.export {
+    background: #a3e635;
+    color: #132a06;
+}
+
+.dash-btn.sync {
+    background: #f59e0b;
+    color: #1f1302;
+}
+
+.dash-btn.refresh {
+    background: #22c55e;
+    color: #06210f;
+}
+
+.sync-status {
+    font-size: 12px;
+    font-weight: 800;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.26);
+    color: #e2e8f0;
+}
+
+.sync-status.live {
+    background: rgba(34, 197, 94, 0.28);
+    color: #86efac;
+}
+
+.name {
+    font-size: clamp(22px, 3vw, 30px);
+    font-weight: 900;
+    background: linear-gradient(270deg, cyan, lime, yellow, red, magenta);
+    background-size: 1000% 100%;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: rgbMove 9s ease-in-out infinite;
+}
+
+.role {
+    font-size: 14px;
+    font-weight: 800;
+    animation: roleColor 1.2s infinite alternate;
+}
+
+@keyframes roleColor {
+    0% { color: var(--ok); }
+    50% { color: var(--warn); }
+    100% { color: var(--bad); }
+}
+
+.logo {
+    min-width: 70px;
+    text-align: right;
+}
+
+.logo img {
+    height: 92px;
+    width: auto;
+    max-width: 100%;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+.header {
+    text-align: center;
+    font-size: clamp(28px, 5vw, 50px);
+    font-weight: 900;
+    background: linear-gradient(270deg, red, cyan, lime, yellow, magenta);
+    background-size: 1000% 100%;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: rgbMove 12s ease-in-out infinite;
+    padding: 0 16px 2px;
+    margin: 0;
+}
+
+.header-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 0;
+    margin-top: -14px;
+    margin-bottom: -4px;
+}
+
+.header-logo img {
+    height: 90px;
+    width: auto;
+    filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.26));
+}
+
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    padding: 0 16px;
+    margin-top: 1px;
+}
+
+.kpi,
+.value {
+    text-align: center;
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.kpi {
+    background: linear-gradient(135deg, #9333ea, #6366f1);
+    font-weight: 700;
+}
+
+.value {
+    background: var(--panel);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.value.flash {
+    animation: valueFlash 0.65s ease-in-out 1;
+}
+
+@keyframes valueFlash {
+    0% { box-shadow: 0 0 0 rgba(34, 211, 238, 0); transform: scale(1); }
+    50% { box-shadow: 0 0 22px rgba(34, 211, 238, 0.75); transform: scale(1.05); }
+    100% { box-shadow: 0 0 0 rgba(34, 211, 238, 0); transform: scale(1); }
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    padding: 12px 20px 18px;
+}
+
+.card {
+    background: var(--panel);
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.title {
+    margin-bottom: 12px;
+    font-size: 22px;
+    font-weight: 900;
+    text-align: center;
+    background: linear-gradient(270deg, cyan, lime, yellow, red, magenta);
+    background-size: 1000% 100%;
+    -webkit-background-clip: text;
+    color: transparent;
+    animation: rgbMove 11s ease-in-out infinite;
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+}
+
+.side {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.mini-title {
+    margin: 0 0 10px;
+    font-size: 26px;
+    font-weight: 900;
+    text-align: center;
+    background: #f6ff00;
+    color: #000;
+    border-radius: 8px;
+    padding: 6px 8px;
+}
+
+.daily-table {
+    width: 100%;
+    border-collapse: collapse;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.daily-table th,
+.daily-table td {
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 6px 8px;
+    text-align: center;
+}
+
+.daily-table thead th {
+    background: #22c55e;
+    color: #001302;
+    font-weight: 900;
+}
+
+.daily-table tbody td {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.daily-table .closure-cell {
+    background: #f97316;
+    color: #111;
+    font-weight: 900;
+}
+
+canvas {
+    width: 100% !important;
+    max-height: 360px;
+}
+
+@media (max-width: 980px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+
+    .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .right-tools {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .logo {
+        text-align: left;
+    }
+}
+
+@media (max-width: 680px) {
+    .welcome-banner {
+        top: 22px;
+        font-size: clamp(18px, 5vw, 26px);
+        white-space: normal;
+        width: min(92%, 560px);
+    }
+
+    .corner-logo {
+        width: 34px;
+        height: 34px;
+    }
+
+    .kpi-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .title {
+        font-size: 18px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div id="loginScreen">
+    <div class="welcome-banner">Welcome to Maintenance KPI'S</div>
+    <div class="login-box">
+        <img class="corner-logo" src="./national.png" alt="National Foods">
+        <div class="login-visual" aria-hidden="true">
+            <div class="person">👤</div>
+            <div class="status-dot"></div>
+        </div>
+        <h2>National Food KPI Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <div id="error"></div>
+    </div>
+</div>
+
+<div id="uploadScreen">
+    <div class="upload-box">
+        <h3>Upload Excel File</h3>
+        <p class="hint">Login ke baad apni `.xlsx` ya `.xls` file select karein.</p>
+        <input type="file" id="excelFile" accept=".xlsx,.xls">
+        <div class="upload-actions">
+            <button class="load-btn" onclick="loadExcelFile()">Load Dashboard Data</button>
+            <button class="skip-btn" onclick="startDashboard(defaultData)">Use Demo Data</button>
+        </div>
+        <div id="uploadError" class="upload-error"></div>
+    </div>
+</div>
+
+<div id="readyScreen" class="ready-screen">
+    <div class="ready-box">
+        <h3>Are you ready?</h3>
+        <p>Click karein aur dashboard animations ke sath open hoga.</p>
+        <button class="ready-btn" onclick="launchDashboard()">Are you ready</button>
+    </div>
+</div>
+
+<div id="dashboard">
+    <div class="top-bar">
+        <div>
+            <div class="name">Syed Nayab Naqvi</div>
+            <div class="role">Sr.IT/OT Automation Officer</div>
+        </div>
+        <div class="right-tools">
+            <span id="syncStatus" class="sync-status">Live: Off</span>
+            <button class="dash-btn export" onclick="exportCurrentData()">Export JSON</button>
+            <button id="liveSyncBtn" class="dash-btn sync" onclick="toggleLiveSync()">Live Sync</button>
+            <button class="dash-btn refresh" onclick="refreshDashboard()">Refresh</button>
+            <button id="loadFileBtn" class="dash-btn upload" onclick="goToUploadScreen()">Load File</button>
+            <button class="dash-btn logout" onclick="logout()">Logout</button>
+            <div class="logo">
+                <img src="./national.png" alt="National Logo">
+            </div>
+        </div>
+    </div>
+
+    <div class="header-logo">
+        <img
+            src="./national.png"
+            alt="National Foods Logo"
+        >
+    </div>
+
+    <div class="header">Maintenance KPI's YTD</div>
+
+    <div class="kpi-row">
+        <div class="kpi">MTTR</div>
+        <div class="kpi">MTBF</div>
+        <div class="kpi">Notification Closure</div>
+        <div class="kpi">Work Order Closure</div>
+    </div>
+
+    <div class="kpi-row">
+        <div class="value" id="mttrValue">0.8</div>
+        <div class="value" id="mtbfValue">627</div>
+        <div class="value percent" id="notifClosureValue">89</div>
+        <div class="value percent" id="workClosureValue">90</div>
+    </div>
+
+    <div class="container">
+        <div>
+            <div class="card">
+                <h3 id="dailyTitle" class="mini-title">Notification Type M3 Date:18/03/2026</h3>
+                <table class="daily-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Open</th>
+                            <th>Action Required</th>
+                            <th>Accept</th>
+                            <th>Rejected</th>
+                            <th>Completed</th>
+                            <th>Closure</th>
+                            <th>MTTR</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dailyNotifBody"></tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="title">Notification Status YTD (M1–M8)</div>
+                <canvas id="notifChart"></canvas>
+            </div>
+
+            <div class="card">
+                <div class="title">Work Order Status YTD (PM01–PM08)</div>
+                <canvas id="workChart"></canvas>
+            </div>
+        </div>
+
+        <div class="side">
+            <div class="card">
+                <div class="title">Notification Closure Rate</div>
+                <canvas id="g1"></canvas>
+            </div>
+
+            <div class="card">
+                <div class="title">Work Order Closure Rate</div>
+                <canvas id="g2"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const defaultData = {
+    kpi: { mttr: 0.8, mtbf: 627, notifClosure: 89, workClosure: 90 },
+    notificationDaily: {
+        title: "Notification Type M3 Date:18/03/2026",
+        rows: [
+            { date: "15/3/2026", open: 0, actionRequired: 0, accept: 4, rejected: 0, completed: 12, closure: 75, mttr: 0.5 },
+            { date: "16/3/2026", open: 0, actionRequired: 0, accept: 7, rejected: 0, completed: 33, closure: 83, mttr: 0.6 },
+            { date: "17/3/2026", open: 0, actionRequired: 0, accept: 6, rejected: 0, completed: 34, closure: 85, mttr: 0.7 }
+        ]
+    },
+    notification: {
+        labels: ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8"],
+        open: [828, 17, 19, 0, 5, 2, 41, 0],
+        actionRequired: [120, 10, 15, 2, 3, 1, 5, 1],
+        accepted: [352, 35, 217, 0, 5, 0, 46, 1],
+        rejected: [6, 2, 1, 0, 0, 0, 1, 0],
+        completed: [2095, 5755, 4896, 7, 29, 4, 246, 6],
+        closure: [64, 99, 95, 100, 74, 67, 74, 86]
+    },
+    workOrder: {
+        labels: ["PM01", "PM02", "PM03", "PM04", "PM05", "PM06", "PM07", "PM08"],
+        total: [2678, 432, 3590, 48, 28, 3, 215, 3],
+        closed: [2317, 395, 3314, 46, 26, 1, 199, 2],
+        pending: [361, 37, 276, 2, 2, 2, 16, 1],
+        closure: [87, 91, 92, 96, 93, 33, 93, 67]
+    }
+};
+
+let notifChart = null;
+let workChart = null;
+const gaugeState = { g1: null, g2: null };
+let pendingDashboardData = null;
+let currentDashboardData = JSON.parse(JSON.stringify(defaultData));
+const liveSync = { url: null, timer: null, intervalMs: 30000 };
+const sourceParamUrl = new URLSearchParams(window.location.search).get("source");
+const sharedMode = Boolean(sourceParamUrl);
+const LIVE_SYNC_PASSWORD = "Information@787";
+let liveSyncUnlocked = false;
+
+function requireLivePassword(promptText = "Password enter karein:") {
+    if (liveSyncUnlocked) return true;
+    const entered = window.prompt(promptText);
+    if (entered === null) return false;
+    if (entered !== LIVE_SYNC_PASSWORD) {
+        window.alert("Wrong password.");
+        return false;
+    }
+    liveSyncUnlocked = true;
+    return true;
+}
+
+function initShareMode() {
+    const loadBtn = document.getElementById("loadFileBtn");
+    if (sharedMode && loadBtn) {
+        loadBtn.style.display = "none";
+    }
+}
+
+async function login() {
+    const user = document.getElementById("username").value;
+    const pass = document.getElementById("password").value;
+
+    if (user === "National 1970" && pass === "Fsdnational") {
+        document.getElementById("error").innerText = "";
+
+        if (sharedMode) {
+            document.getElementById("loginScreen").style.display = "none";
+            const ok = await connectLiveSync(sourceParamUrl, true);
+            if (!ok) {
+                document.getElementById("loginScreen").style.display = "flex";
+                document.getElementById("error").innerText = "Live dashboard load nahi hua. Link owner se updated source link lein.";
+            }
+            return;
+        }
+
+        document.getElementById("loginScreen").style.display = "none";
+        document.getElementById("uploadScreen").style.display = "flex";
+        if (sourceParamUrl) {
+            const ok = await connectLiveSync(sourceParamUrl, true);
+            if (!ok) {
+                document.getElementById("uploadError").innerText = "Live source load nahi hua. Aap file manually upload kar sakte hain.";
+            }
+        }
+    } else {
+        document.getElementById("error").innerText = "Invalid Credentials";
+    }
+}
+
+function logout() {
+    stopLiveSync();
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("uploadScreen").style.display = "none";
+    document.getElementById("readyScreen").style.display = "none";
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+    document.getElementById("excelFile").value = "";
+    document.getElementById("uploadError").innerText = "";
+    pendingDashboardData = null;
+}
+
+function goToUploadScreen() {
+    if (sharedMode) return;
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("readyScreen").style.display = "none";
+    document.getElementById("uploadScreen").style.display = "flex";
+    document.getElementById("uploadError").innerText = "";
+}
+
+async function refreshDashboard() {
+    const btn = document.querySelector(".dash-btn.refresh");
+    const oldText = btn ? btn.innerText : "";
+    if (btn) {
+        btn.innerText = "Refreshing...";
+        btn.disabled = true;
+    }
+
+    try {
+        if (liveSync.url) {
+            const fresh = await fetchLiveData(liveSync.url);
+            pendingDashboardData = fresh;
+            applyDashboardData(fresh, true);
+        } else {
+            applyDashboardData(currentDashboardData, true);
+        }
+
+        document.querySelectorAll(".value").forEach((el) => {
+            el.classList.remove("flash");
+            void el.offsetWidth;
+            el.classList.add("flash");
+        });
+    } catch (error) {
+        console.error("Manual refresh failed:", error);
+        alert("Refresh failed. Source URL ya internet check karein.");
+    } finally {
+        if (btn) {
+            btn.innerText = oldText || "Refresh";
+            btn.disabled = false;
+        }
+    }
+}
+
+function animateValue(el, target, isPercent = false) {
+    const numericTarget = Number(target) || 0;
+    const decimals = isPercent ? 0 : (numericTarget % 1 === 0 ? 0 : 1);
+    let count = 0;
+    const step = numericTarget / 40 || 1;
+
+    el.innerText = isPercent ? "0%" : (decimals ? "0.0" : "0");
+
+    const i = setInterval(() => {
+        count += step;
+
+        if (isPercent) {
+            el.innerText = count.toFixed(0) + "%";
+        } else {
+            el.innerText = count.toFixed(decimals);
+        }
+
+        if (count >= numericTarget) {
+            el.innerText = isPercent ? numericTarget.toFixed(0) + "%" : numericTarget.toFixed(decimals);
+            clearInterval(i);
+        }
+    }, 20);
+}
+
+function setKpiValue(el, value, isPercent) {
+    const numeric = Number(value) || 0;
+    const decimals = isPercent ? 0 : (numeric % 1 === 0 ? 0 : 1);
+    el.innerText = isPercent ? numeric.toFixed(0) + "%" : numeric.toFixed(decimals);
+}
+
+function updateKpis(data, animate = true) {
+    const mttr = document.getElementById("mttrValue");
+    const mtbf = document.getElementById("mtbfValue");
+    const notif = document.getElementById("notifClosureValue");
+    const work = document.getElementById("workClosureValue");
+
+    if (animate) {
+        animateValue(mttr, data.kpi.mttr, false);
+        animateValue(mtbf, data.kpi.mtbf, false);
+        animateValue(notif, data.kpi.notifClosure, true);
+        animateValue(work, data.kpi.workClosure, true);
+        return;
+    }
+
+    setKpiValue(mttr, data.kpi.mttr, false);
+    setKpiValue(mtbf, data.kpi.mtbf, false);
+    setKpiValue(notif, data.kpi.notifClosure, true);
+    setKpiValue(work, data.kpi.workClosure, true);
+}
+
+function renderDailyNotificationTable(data) {
+    const titleEl = document.getElementById("dailyTitle");
+    const bodyEl = document.getElementById("dailyNotifBody");
+    titleEl.innerText = data.notificationDaily?.title || defaultData.notificationDaily.title;
+    bodyEl.innerHTML = "";
+
+    const rows = data.notificationDaily?.rows?.length ? data.notificationDaily.rows : defaultData.notificationDaily.rows;
+
+    rows.forEach((row) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row.date ?? ""}</td>
+            <td>${Number(row.open ?? 0)}</td>
+            <td>${Number(row.actionRequired ?? 0)}</td>
+            <td>${Number(row.accept ?? 0)}</td>
+            <td>${Number(row.rejected ?? 0)}</td>
+            <td>${Number(row.completed ?? 0)}</td>
+            <td class="closure-cell">${Number(row.closure ?? 0).toFixed(0)}%</td>
+            <td>${Number(row.mttr ?? 0).toFixed(1)}</td>
+        `;
+        bodyEl.appendChild(tr);
+    });
+}
+
+function renderNotificationChart(data) {
+    if (notifChart) {
+        notifChart.destroy();
+    }
+
+    notifChart = new Chart(document.getElementById("notifChart"), {
+        type: "bar",
+        data: {
+            labels: data.notification.labels,
+            datasets: [
+                { label: "Open", data: data.notification.open, backgroundColor: "#facc15" },
+                { label: "Accepted", data: data.notification.accepted, backgroundColor: "#38bdf8" },
+                { label: "Action Required", data: data.notification.actionRequired, backgroundColor: "#fb923c" },
+                { label: "Rejected", data: data.notification.rejected, backgroundColor: "#ef4444" },
+                { label: "Completed", data: data.notification.completed, backgroundColor: "#22c55e" },
+                {
+                    type: "line",
+                    label: "Closure %",
+                    data: data.notification.closure,
+                    yAxisID: "y1",
+                    borderColor: "#f97316",
+                    backgroundColor: "#f97316",
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.25
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            scales: {
+                y: { beginAtZero: true },
+                y1: {
+                    position: "right",
+                    beginAtZero: true,
+                    min: 0,
+                    max: 100,
+                    grid: { drawOnChartArea: false },
+                    ticks: { callback: (value) => value + "%" }
+                }
+            }
+        }
+    });
+}
+
+function renderWorkChart(data) {
+    if (workChart) {
+        workChart.destroy();
+    }
+
+    workChart = new Chart(document.getElementById("workChart"), {
+        type: "bar",
+        data: {
+            labels: data.workOrder.labels,
+            datasets: [
+                { label: "Total", data: data.workOrder.total, backgroundColor: "#6366f1" },
+                { label: "Closed", data: data.workOrder.closed, backgroundColor: "#22c55e" },
+                { label: "Pending", data: data.workOrder.pending, backgroundColor: "#facc15" },
+                {
+                    type: "line",
+                    label: "Closure %",
+                    data: data.workOrder.closure,
+                    yAxisID: "y1",
+                    borderColor: "#fb923c",
+                    backgroundColor: "#fb923c",
+                    borderWidth: 3,
+                    pointRadius: 3,
+                    pointHoverRadius: 5,
+                    tension: 0.25
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            scales: {
+                y: { beginAtZero: true },
+                y1: {
+                    position: "right",
+                    beginAtZero: true,
+                    min: 0,
+                    max: 100,
+                    grid: { drawOnChartArea: false },
+                    ticks: { callback: (value) => value + "%" }
+                }
+            }
+        }
+    });
+}
+
+function gauge(id, val, animate = true) {
+    if (gaugeState[id]) {
+        gaugeState[id].destroy();
+    }
+
+    let current = 0;
+    const target = Math.max(0, Math.min(100, Number(val) || 0));
+
+    const chart = new Chart(document.getElementById(id), {
+        type: "doughnut",
+        data: {
+            datasets: [{
+                data: [0, 100],
+                backgroundColor: ["#22c55e", "rgba(255,255,255,0.05)"],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            rotation: -90,
+            circumference: 180,
+            cutout: "75%",
+            plugins: { tooltip: { enabled: false } }
+        },
+        plugins: [{
+            beforeDraw(c) {
+                const ctx = c.ctx;
+                const w = c.width;
+                const h = c.height;
+
+                ctx.fillStyle = "#fff";
+                ctx.font = "bold 26px Segoe UI";
+                ctx.textAlign = "center";
+                ctx.fillText(current + "%", w / 2, h / 1.2);
+
+                ctx.font = "12px Segoe UI";
+                ctx.fillStyle = "#94a3b8";
+                ctx.fillText("Completion", w / 2, h / 1.05);
+            }
+        }]
+    });
+
+    gaugeState[id] = chart;
+
+    if (!animate) {
+        current = Math.round(target);
+        const color = current >= 90 ? "#22c55e" :
+            current >= 70 ? "#facc15" :
+            "#ef4444";
+        chart.data.datasets[0].backgroundColor = [color, "rgba(255,255,255,0.05)"];
+        chart.data.datasets[0].data = [current, 100 - current];
+        chart.update();
+        return;
+    }
+
+    const i = setInterval(() => {
+        current++;
+
+        const color = current >= 90 ? "#22c55e" :
+            current >= 70 ? "#facc15" :
+            "#ef4444";
+
+        chart.data.datasets[0].backgroundColor = [color, "rgba(255,255,255,0.05)"];
+        chart.data.datasets[0].data = [current, 100 - current];
+        chart.update();
+
+        if (current >= target) {
+            clearInterval(i);
+        }
+    }, 15);
+}
+
+function playIntroAnimation() {
+    const items = Array.from(document.querySelectorAll("#dashboard .top-bar, #dashboard .header-logo, #dashboard .header, #dashboard .kpi-row, #dashboard .card"));
+    items.forEach((el, idx) => {
+        const dir = idx % 2 === 0 ? 1 : -1;
+        const x = Math.round((Math.random() * 1100 + 260) * dir);
+        const y = Math.round((Math.random() * 640 + 160) * (Math.random() > 0.5 ? 1 : -1));
+        const r = Math.round((Math.random() - 0.5) * 90);
+        const s = (Math.random() * 0.45 + 0.5).toFixed(2);
+        el.style.transition = "none";
+        el.style.opacity = "0";
+        el.style.filter = "blur(6px)";
+        el.style.transform = `translate(${x}px, ${y}px) rotate(${r}deg) scale(${s})`;
+    });
+
+    void document.body.offsetHeight;
+
+    items.forEach((el, idx) => {
+        const overshootX = Math.round((Math.random() - 0.5) * 70);
+        const overshootY = Math.round((Math.random() - 0.5) * 46);
+        const overshootR = Math.round((Math.random() - 0.5) * 8);
+        el.style.transition = "transform 760ms cubic-bezier(0.2, 0.9, 0.2, 1.12), opacity 620ms ease, filter 620ms ease";
+        el.style.transitionDelay = `${idx * 80}ms`;
+        el.style.opacity = "1";
+        el.style.filter = "blur(0px)";
+        el.style.transform = `translate(${overshootX}px, ${overshootY}px) rotate(${overshootR}deg) scale(1.03)`;
+
+        setTimeout(() => {
+            el.style.transition = "transform 560ms cubic-bezier(0.16, 1, 0.3, 1)";
+            el.style.transform = "translate(0, 0) rotate(0deg) scale(1)";
+        }, 760 + idx * 80);
+    });
+}
+
+function applyDashboardData(data, animateValues = true) {
+    currentDashboardData = JSON.parse(JSON.stringify(data));
+    updateKpis(currentDashboardData, animateValues);
+    renderDailyNotificationTable(currentDashboardData);
+    renderNotificationChart(currentDashboardData);
+    renderWorkChart(currentDashboardData);
+    gauge("g1", currentDashboardData.kpi.notifClosure, animateValues);
+    gauge("g2", currentDashboardData.kpi.workClosure, animateValues);
+}
+
+function updateSyncStatus() {
+    const status = document.getElementById("syncStatus");
+    const btn = document.getElementById("liveSyncBtn");
+    if (!status || !btn) return;
+
+    if (liveSync.url) {
+        status.classList.add("live");
+        status.innerText = "Live: ON";
+        btn.innerText = "Stop Sync";
+    } else {
+        status.classList.remove("live");
+        status.innerText = "Live: Off";
+        btn.innerText = "Live Sync";
+    }
+}
+
+function stopLiveSync() {
+    if (liveSync.timer) {
+        clearInterval(liveSync.timer);
+        liveSync.timer = null;
+    }
+    liveSync.url = null;
+    updateSyncStatus();
+}
+
+function deepMerge(target, source) {
+    Object.keys(source || {}).forEach((key) => {
+        const src = source[key];
+        if (Array.isArray(src)) {
+            target[key] = src.slice();
+        } else if (src && typeof src === "object") {
+            if (!target[key] || typeof target[key] !== "object" || Array.isArray(target[key])) {
+                target[key] = {};
+            }
+            deepMerge(target[key], src);
+        } else if (src !== undefined) {
+            target[key] = src;
+        }
+    });
+    return target;
+}
+
+function normalizeIncomingData(raw) {
+    const merged = JSON.parse(JSON.stringify(defaultData));
+    if (raw && typeof raw === "object") {
+        deepMerge(merged, raw);
+    }
+    return merged;
+}
+
+async function fetchLiveData(url) {
+    const bust = `${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    const response = await fetch(bust, { cache: "no-store" });
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+    const json = await response.json();
+    return normalizeIncomingData(json);
+}
+
+async function connectLiveSync(url, openDashboard = false) {
+    try {
+        const data = await fetchLiveData(url);
+        liveSync.url = url;
+        updateSyncStatus();
+
+        if (liveSync.timer) clearInterval(liveSync.timer);
+        liveSync.timer = setInterval(async () => {
+            try {
+                const fresh = await fetchLiveData(liveSync.url);
+                pendingDashboardData = fresh;
+                if (document.getElementById("dashboard").style.display === "block") {
+                    applyDashboardData(fresh, false);
+                }
+            } catch (err) {
+                console.warn("Live refresh failed:", err);
+            }
+        }, liveSync.intervalMs);
+
+        if (openDashboard) {
+            startDashboard(data);
+        } else if (document.getElementById("dashboard").style.display === "block") {
+            applyDashboardData(data, false);
+        } else {
+            pendingDashboardData = data;
+        }
+        return true;
+    } catch (error) {
+        console.error("Live sync connection failed:", error);
+        return false;
+    }
+}
+
+async function toggleLiveSync() {
+    if (liveSync.url) {
+        const enteredStop = window.prompt("Stop Sync password enter karein:");
+        if (enteredStop === null) return;
+        if (enteredStop !== LIVE_SYNC_PASSWORD) {
+            window.alert("Wrong password. Sync stop locked hai.");
+            return;
+        }
+        stopLiveSync();
+        return;
+    }
+
+    const url = window.prompt("Shared JSON URL paste karein (https://...)");
+    if (!url) return;
+    const ok = await connectLiveSync(url.trim(), false);
+    if (!ok) {
+        window.alert("Live Sync connect nahi hua. URL check karein (public JSON + CORS).");
+    }
+}
+
+function exportCurrentData() {
+    if (!liveSyncUnlocked) {
+        if (!requireLivePassword("Export password enter karein:")) return;
+    }
+
+    const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const blob = new Blob([JSON.stringify(currentDashboardData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `maintenance-kpi-live-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
+function startDashboard(data) {
+    pendingDashboardData = data;
+    document.getElementById("uploadScreen").style.display = "none";
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("readyScreen").style.display = "flex";
+}
+
+function launchDashboard() {
+    const data = pendingDashboardData || defaultData;
+    document.getElementById("readyScreen").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    applyDashboardData(data, false);
+    playIntroAnimation();
+
+    setTimeout(() => {
+        updateKpis(data, true);
+        gauge("g1", data.kpi.notifClosure, true);
+        gauge("g2", data.kpi.workClosure, true);
+    }, 1150);
+}
+
+function normalize(value) {
+    return String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+}
+
+function parseNumber(value) {
+    if (typeof value === "number") {
+        return value;
+    }
+    const cleaned = String(value ?? "")
+        .replace(/,/g, "")
+        .replace(/%/g, "")
+        .trim();
+    const parsed = Number(cleaned);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parsePercent(value) {
+    const num = parseNumber(value);
+    if (num === null) return null;
+    if (num >= 0 && num <= 1) return num * 100;
+    return num;
+}
+
+function rowText(row) {
+    return (row || [])
+        .map((v) => normalize(v))
+        .filter(Boolean)
+        .join(" ");
+}
+
+function hasAnyNumericInRow(row) {
+    return (row || []).some((cell) => parseNumber(cell) !== null);
+}
+
+function findRowIndex(rows, predicate, start = 0) {
+    for (let i = start; i < rows.length; i++) {
+        if (predicate(rows[i], i)) return i;
+    }
+    return -1;
+}
+
+function getColumnMap(headerRow = []) {
+    const map = {};
+    headerRow.forEach((cell, index) => {
+        const n = normalize(cell);
+        if (!n) return;
+
+        if (n.includes("notification type") || n.includes("order type") || n === "date") map.label = index;
+        if (n.includes("order type")) map.label = index;
+        if (n === "open") map.open = index;
+        if (n.includes("action required")) map.actionRequired = index;
+        if (n === "accept" || n === "accepted") map.accepted = index;
+        if (n.includes("reject")) map.rejected = index;
+        if (n.includes("complete")) map.completed = index;
+        if (n.includes("total order") || n === "total") map.total = index;
+        if (n.includes("closed order") || n === "closed") map.closed = index;
+        if (n.includes("pending")) map.pending = index;
+        if (n.includes("closure")) map.closure = index;
+        if (n === "mttr") map.mttr = index;
+        if (n === "mtbf") map.mtbf = index;
+        if (n.includes("work order closure")) map.workClosure = index;
+        if (n.includes("notification closure")) map.notifClosure = index;
+    });
+    return map;
+}
+
+function parseTableRows(rows, headerIndex, map, stopPhrases, rowMapper) {
+    const parsedRows = [];
+    let emptyStreak = 0;
+
+    for (let i = headerIndex + 1; i < rows.length; i++) {
+        const row = rows[i] || [];
+        const text = rowText(row);
+
+        if (stopPhrases.some((phrase) => text.includes(phrase))) {
+            break;
+        }
+
+        const hasLabel = String(row?.[map.label] ?? "").trim() !== "";
+        const hasNumber = hasAnyNumericInRow(row);
+
+        if (!hasLabel && !hasNumber) {
+            emptyStreak += 1;
+            if (emptyStreak >= 2 && parsedRows.length > 0) break;
+            continue;
+        }
+        emptyStreak = 0;
+
+        const mapped = rowMapper(row);
+        if (mapped) parsedRows.push(mapped);
+    }
+
+    return parsedRows;
+}
+
+function parseDashboardWorkbook(rows) {
+    const parsed = JSON.parse(JSON.stringify(defaultData));
+
+    const kpiHeaderIndex = findRowIndex(rows, (row) => {
+        const m = getColumnMap(row);
+        return m.mttr !== undefined && m.mtbf !== undefined;
+    });
+
+    if (kpiHeaderIndex >= 0) {
+        const kpiMap = getColumnMap(rows[kpiHeaderIndex]);
+        const kpiValueIndex = findRowIndex(rows, (row, idx) => idx > kpiHeaderIndex && idx <= kpiHeaderIndex + 6 && hasAnyNumericInRow(row), kpiHeaderIndex + 1);
+        if (kpiValueIndex >= 0) {
+            const kpiValues = rows[kpiValueIndex];
+            parsed.kpi.mttr = parseNumber(kpiValues[kpiMap.mttr]) ?? parsed.kpi.mttr;
+            parsed.kpi.mtbf = parseNumber(kpiValues[kpiMap.mtbf]) ?? parsed.kpi.mtbf;
+            parsed.kpi.notifClosure = parsePercent(kpiValues[kpiMap.notifClosure]) ?? parsed.kpi.notifClosure;
+            parsed.kpi.workClosure = parsePercent(kpiValues[kpiMap.workClosure]) ?? parsed.kpi.workClosure;
+        }
+    }
+
+    const dailyTitleIndex = findRowIndex(rows, (row) => {
+        const txt = rowText(row);
+        return txt.includes("notification type") && txt.includes("date");
+    });
+
+    if (dailyTitleIndex >= 0) {
+        const titleText = rows[dailyTitleIndex].filter((c) => String(c ?? "").trim() !== "").join(" ");
+        if (titleText) parsed.notificationDaily.title = titleText;
+        const dailyHeaderIndex = findRowIndex(rows, (row, idx) => {
+            if (idx <= dailyTitleIndex || idx > dailyTitleIndex + 8) return false;
+            const m = getColumnMap(row);
+            return m.label !== undefined && m.open !== undefined && m.completed !== undefined && m.closure !== undefined && normalize(row[m.label]) === "date";
+        }, dailyTitleIndex + 1);
+
+        if (dailyHeaderIndex >= 0) {
+            const dm = getColumnMap(rows[dailyHeaderIndex]);
+            const dRows = parseTableRows(
+                rows,
+                dailyHeaderIndex,
+                dm,
+                ["notification status ytd", "work order status ytd", "overall closure rate"],
+                (row) => {
+                    const date = String(row?.[dm.label] ?? "").trim();
+                    if (!date || parseNumber(row?.[dm.completed]) === null) return null;
+                    return {
+                        date,
+                        open: parseNumber(row?.[dm.open]) ?? 0,
+                        actionRequired: parseNumber(row?.[dm.actionRequired]) ?? 0,
+                        accept: parseNumber(row?.[dm.accepted]) ?? 0,
+                        rejected: parseNumber(row?.[dm.rejected]) ?? 0,
+                        completed: parseNumber(row?.[dm.completed]) ?? 0,
+                        closure: parsePercent(row?.[dm.closure]) ?? 0,
+                        mttr: parseNumber(row?.[dm.mttr]) ?? 0
+                    };
+                }
+            );
+            if (dRows.length) parsed.notificationDaily.rows = dRows;
+        }
+    }
+
+    const notifHeaderIndex = findRowIndex(rows, (row) => {
+        const m = getColumnMap(row);
+        if (!(m.label !== undefined && m.open !== undefined && m.completed !== undefined && m.closure !== undefined)) return false;
+        const first = normalize(row[m.label]);
+        const text = rowText(row);
+        return first.includes("notification type") && !text.includes("date");
+    });
+
+    if (notifHeaderIndex >= 0) {
+        const notifMap = getColumnMap(rows[notifHeaderIndex]);
+        const nRows = parseTableRows(
+            rows,
+            notifHeaderIndex,
+            notifMap,
+            ["work order status ytd"],
+            (row) => {
+                const label = String(row?.[notifMap.label] ?? "").trim();
+                const nLabel = normalize(label);
+                if (!label || nLabel.includes("overall closure rate")) return null;
+                if (parseNumber(row?.[notifMap.completed]) === null && parseNumber(row?.[notifMap.open]) === null) return null;
+                return {
+                    label,
+                    open: parseNumber(row[notifMap.open]) ?? 0,
+                    actionRequired: parseNumber(row[notifMap.actionRequired]) ?? 0,
+                    accepted: parseNumber(row[notifMap.accepted]) ?? 0,
+                    rejected: parseNumber(row[notifMap.rejected]) ?? 0,
+                    completed: parseNumber(row[notifMap.completed]) ?? 0,
+                    closure: parsePercent(row[notifMap.closure])
+                };
+            }
+        );
+
+        if (nRows.length) {
+            parsed.notification.labels = nRows.map((r) => r.label);
+            parsed.notification.open = nRows.map((r) => r.open);
+            parsed.notification.actionRequired = nRows.map((r) => r.actionRequired);
+            parsed.notification.accepted = nRows.map((r) => r.accepted);
+            parsed.notification.rejected = nRows.map((r) => r.rejected);
+            parsed.notification.completed = nRows.map((r) => r.completed);
+            parsed.notification.closure = nRows.map((r) => {
+                if (r.closure !== null && r.closure !== undefined) return r.closure;
+                const total = r.open + r.actionRequired + r.accepted + r.rejected + r.completed;
+                if (!total) return 0;
+                return (r.completed / total) * 100;
+            });
+        }
+
+        const notifOverallRow = findRowIndex(rows, (row, idx) => idx > notifHeaderIndex && rowText(row).includes("overall closure rate"));
+        if (notifOverallRow >= 0 && notifMap.closure !== undefined) {
+            parsed.kpi.notifClosure = parsePercent(rows[notifOverallRow][notifMap.closure]) ?? parsed.kpi.notifClosure;
+        }
+    }
+
+    const workHeaderIndex = findRowIndex(rows, (row) => {
+        const m = getColumnMap(row);
+        return m.label !== undefined && m.total !== undefined && m.closed !== undefined && m.pending !== undefined && normalize(row[m.label]).includes("order type");
+    });
+
+    if (workHeaderIndex >= 0) {
+        const workMap = getColumnMap(rows[workHeaderIndex]);
+        const wRows = parseTableRows(
+            rows,
+            workHeaderIndex,
+            workMap,
+            [],
+            (row) => {
+                const label = String(row?.[workMap.label] ?? "").trim();
+                const nLabel = normalize(label);
+                if (!label || nLabel.includes("overall closure rate")) return null;
+                if (parseNumber(row?.[workMap.total]) === null && parseNumber(row?.[workMap.closed]) === null) return null;
+                return {
+                    label,
+                    total: parseNumber(row[workMap.total]) ?? 0,
+                    closed: parseNumber(row[workMap.closed]) ?? 0,
+                    pending: parseNumber(row[workMap.pending]) ?? 0,
+                    closure: parsePercent(row[workMap.closure])
+                };
+            }
+        );
+
+        if (wRows.length) {
+            parsed.workOrder.labels = wRows.map((r) => r.label);
+            parsed.workOrder.total = wRows.map((r) => r.total);
+            parsed.workOrder.closed = wRows.map((r) => r.closed);
+            parsed.workOrder.pending = wRows.map((r) => r.pending);
+            parsed.workOrder.closure = wRows.map((r) => {
+                if (r.closure !== null && r.closure !== undefined) return r.closure;
+                if (!r.total) return 0;
+                return (r.closed / r.total) * 100;
+            });
+        }
+
+        const workOverallRow = findRowIndex(rows, (row, index) => index > workHeaderIndex && rowText(row).includes("overall closure rate"));
+        if (workOverallRow >= 0 && workMap.closure !== undefined) {
+            parsed.kpi.workClosure = parsePercent(rows[workOverallRow][workMap.closure]) ?? parsed.kpi.workClosure;
+        }
+    }
+
+    return parsed;
+}
+
+function scoreParsedData(data) {
+    return (data.notification?.labels?.length || 0) +
+        (data.workOrder?.labels?.length || 0) +
+        ((data.notificationDaily?.rows?.length || 0) * 2);
+}
+
+async function loadExcelFile() {
+    const uploadError = document.getElementById("uploadError");
+    const fileInput = document.getElementById("excelFile");
+    uploadError.innerText = "";
+
+    const file = fileInput.files?.[0];
+    if (!file) {
+        uploadError.innerText = "Please select an Excel file first.";
+        return;
+    }
+
+    try {
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: "array" });
+        let parsedData = JSON.parse(JSON.stringify(defaultData));
+        let bestScore = -1;
+
+        workbook.SheetNames.forEach((name) => {
+            const sheet = workbook.Sheets[name];
+            const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: null });
+            const candidate = parseDashboardWorkbook(rows);
+            const score = scoreParsedData(candidate);
+            if (score > bestScore) {
+                bestScore = score;
+                parsedData = candidate;
+            }
+        });
+
+        startDashboard(parsedData);
+    } catch (error) {
+        uploadError.innerText = "File parse nahi hui. Please valid Excel file upload karein.";
+        console.error(error);
+    }
+}
+
+updateSyncStatus();
+initShareMode();
+
+</script>
+
+</body>
+</html>
+
