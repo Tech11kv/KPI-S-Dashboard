@@ -1,0 +1,167 @@
+{
+  "kpi": {
+    "mttr": 0.8,
+    "mtbf": 627,
+    "notifClosure": 70,
+    "workClosure": 70
+  },
+  "notificationDaily": {
+    "title": "Notification Type M3 Date:18/03/2026",
+    "rows": [
+      {
+        "date": "15/3/2026",
+        "open": 45,
+        "actionRequired": 3,
+        "accept": 4,
+        "rejected": 0,
+        "completed": 12,
+        "closure": 75,
+        "mttr": 0.5
+      },
+      {
+        "date": "16/3/2026",
+        "open": 800,
+        "actionRequired": 10,
+        "accept": 7,
+        "rejected": 56,
+        "completed": 33,
+        "closure": 83,
+        "mttr": 0.6
+      },
+      {
+        "date": "17/3/2026",
+        "open": 65,
+        "actionRequired": 10,
+        "accept": 6,
+        "rejected": 0,
+        "completed": 34,
+        "closure": 85,
+        "mttr": 0.7
+      }
+    ]
+  },
+  "notification": {
+    "labels": [
+      "M1",
+      "M2",
+      "M3",
+      "M4",
+      "M5",
+      "M6",
+      "M7",
+      "M8"
+    ],
+    "open": [
+      828,
+      17,
+      19,
+      0,
+      5,
+      2,
+      41,
+      0
+    ],
+    "actionRequired": [
+      155,
+      16,
+      99,
+      0,
+      4,
+      1,
+      33,
+      0
+    ],
+    "accepted": [
+      352,
+      35,
+      217,
+      0,
+      5,
+      0,
+      46,
+      1
+    ],
+    "rejected": [
+      6,
+      29,
+      40,
+      13,
+      0,
+      0,
+      4,
+      0
+    ],
+    "completed": [
+      2095,
+      5755,
+      4896,
+      7,
+      29,
+      4,
+      246,
+      6
+    ],
+    "closure": [
+      98,
+      67,
+      23,
+      56,
+      76,
+      23,
+      67,
+      34
+    ]
+  },
+  "workOrder": {
+    "labels": [
+      "PM01",
+      "PM02",
+      "PM03",
+      "PM04",
+      "PM05",
+      "PM06",
+      "PM07",
+      "PM08"
+    ],
+    "total": [
+      2678,
+      432,
+      3590,
+      48,
+      28,
+      3,
+      215,
+      3
+    ],
+    "closed": [
+      2317,
+      395,
+      3314,
+      46,
+      26,
+      1,
+      199,
+      2
+    ],
+    "pending": [
+      361,
+      37,
+      276,
+      2,
+      2,
+      2,
+      16,
+      1
+    ],
+    "closure": [
+      87,
+      91,
+      92,
+      96,
+      93,
+      33,
+      93,
+      67
+    ]
+  }
+}
