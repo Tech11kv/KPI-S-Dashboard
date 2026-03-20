@@ -10,7 +10,7 @@
     "rows": [
       {
         "date": "15/3/2026",
-        "open": 12,
+        "open": 34,
         "actionRequired": 3,
         "accept": 4,
         "rejected": 0,
@@ -20,7 +20,7 @@
       },
       {
         "date": "16/3/2026",
-        "open": 13,
+        "open": 444,
         "actionRequired": 10,
         "accept": 7,
         "rejected": 56,
@@ -30,7 +30,7 @@
       },
       {
         "date": "17/3/2026",
-        "open": 14,
+        "open": 87334,
         "actionRequired": 10,
         "accept": 6,
         "rejected": 0,
